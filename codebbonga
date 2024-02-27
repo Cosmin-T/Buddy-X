@@ -1,0 +1,18 @@
+from ./Volumes/Samsung 970 EVO/Documents/LLM Models/codebooga-34b-v0.1.Q4_K_M.gguf
+
+TEMPLATE """
+{{- if .System }}
+system: {{ .System }}
+{{- end }}
+user:
+{{ .Prompt }}
+assistant:
+"""
+
+SYSTEM """
+"""
+
+PARAMETERS {
+  "stop": "\n"
+}
+
