@@ -98,37 +98,42 @@ def query_employees(human_input, say):
 
     table_names = metadata.tables.keys()
     try:
-        if 'analyze' in human_input.lower():
-            say('Analyzing...')
-            prompt_template = prompt_temp(table_names, history="", human_input=human_input)
-            full_prompt = f'{[prompt_template]} \n\nQuestion: {human_input.lower()}'
-            response = db_chain.invoke({"query": full_prompt})
-            if response:
-                if 'result' in response:
-                    print("Found result in response:", response['result'])
-                    return response['result']
-                else:
-                    print("Could not find an answer to the question")
-                    return f'Unfortunately, I could not find an answer to your question: \n"{human_input.lower()}"'
+        # if 'analyze' in human_input.lower():
+        say('Analyzing...')
+        prompt_template = prompt_temp(table_names, history="", human_input=human_input)
+        full_prompt = f'{[prompt_template]} \n\nQuestion: {human_input.lower()}'
+        response = db_chain.invoke({"query": full_prompt})
+        if response:
+            if 'result' in response:
+                print("Found result in response:", response['result'])
+                return response['result']
             else:
-                print("Failed to extract answer from the response.")
-                return "Failed to extract answer from the response."
-
-        elif any(greet.lower() in human_input.lower() for greet in greetings) or'help' in human_input.lower():
-            print("Greetings detected.")
-            return f'Greetings! You can usse Use "Analyze" in front of your sentence, followed by your question to activate natural language processing and talk with the Databse, or use LLM to talk with the Large Language Model.'
-
-        elif 'llm' in human_input.lower():
-            say('Thinking...')
-            processed_input = human_input.lower().replace('llm', '').strip()
-            response = llm(processed_input)
-            return response
-
+                print("Could not find an answer to the question")
+                return f'Unfortunately, I could not find an answer to your question: \n"{human_input.lower()}"'
         else:
             print("No specific action for the question.")
             return f"""
                 I apologize for any confusion. As a model trained in natural language processing, my capabilities are linked to the {'. '.join(table_names)} database. I'm here to assist with any queries or information you might need concerning it. Use "Analyze" in front of your sentence, followed by your question to activate natural language processing and talk with the Databse, or use LLM to talk with the Large Language Model.'
             """
+            # else:
+            #     print("Failed to extract answer from the response.")
+            #     return "Failed to extract answer from the response."
+
+            # elif any(greet.lower() in human_input.lower() for greet in greetings) or'help' in human_input.lower():
+            #     print("Greetings detected.")
+            #     return f'Greetings! You can usse Use "Analyze" in front of your sentence, followed by your question to activate natural language processing and talk with the Databse, or use LLM to talk with the Large Language Model.'
+
+            # elif 'llm' in human_input.lower():
+            #     say('Thinking...')
+            #     processed_input = human_input.lower().replace('llm', '').strip()
+            #     response = llm(processed_input)
+            #     return response
+
+        # else:
+        #     print("No specific action for the question.")
+        #     return f"""
+        #         I apologize for any confusion. As a model trained in natural language processing, my capabilities are linked to the {'. '.join(table_names)} database. I'm here to assist with any queries or information you might need concerning it. Use "Analyze" in front of your sentence, followed by your question to activate natural language processing and talk with the Databse, or use LLM to talk with the Large Language Model.'
+        #     """
 
     except Exception as e:
         print(f'Error during processing: {e}')
