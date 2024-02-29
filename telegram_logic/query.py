@@ -80,8 +80,8 @@ def prompt_temp(table_names, history, human_input):
             SELECT EmployeeName FROM "table name" WHERE EmployeeRole = 'HR';
 
         Based on the above examples, convert the following question into an SQL query and return the result in the following format:
-        FORMAT 1 - There are 521 total employees.
-        FORMAT 2 - The employees working in the HR department are: John, Suzy, Lola
+            There are 521 total employees.
+            The employees working in the HR department are: John, Suzy, Lola
 
         As an expert, you must use joins whenever required.
 
