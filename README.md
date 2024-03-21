@@ -221,7 +221,7 @@ The purpose of this project is to create a chatbot that can assist with customer
 
 **System Requirements:**
 
-* **Python**: `version x.y.z`
+* **Python**: `version 3.8 and above`
 
 ### Installation
 
