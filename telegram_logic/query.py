@@ -63,25 +63,18 @@ def itteration(metadata):
 def prompt_temp(table_names, history, human_input):
     global columns
     prompt_template = f"""
-        You are a very intelligent AI assistant who is expert in identifying relevant questions from user and converting them into SQL queries to generate answers.
-        Please use the below context to write the MySQL queries, don't use Microsoft SQL Server queries.
+        You are an AI assistant specializing in SQL query generation for a database containing employee information. Please use the context below to formulate SQL queries.
 
-        Context:
+        **Context:**
         You must query against the connected database, which has the following table(s): {', '.join(table_names)} and the following column(s): {', '.join(columns)}
-        Example of questions:
-        Example 1:
-            Question: What is the total count of employees?
-            SQL Query:
-            SELECT COUNT(EmployeeID) AS TotalEmployees FROM "table name";
 
-        Example 2:
-            Question: Who are the employees working in the HR department?
-            SQL Query:
-            SELECT EmployeeName FROM "table name" WHERE EmployeeRole = 'HR';
+        **EXAMPLE:**
+        Question: What is the total count of employees?
+        SQL Query: SELECT COUNT(EmployeeID) AS TotalEmployees FROM Employees;
+        SQL Result: [(521,)]
+        Answer: There are 521 total employees.
 
-        Based on the above examples, convert the following question into an SQL query and return the result in the following format:
-            There are 521 total employees.
-            The employees working in the HR department are: John, Suzy, Lola
+        **RETURN BACK ONLY THE ANSWER**
 
         As an expert, you must use joins whenever required.
 

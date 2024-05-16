@@ -14,6 +14,8 @@ def select_mod(llm_name):
         return UNCENSORE_LLM
     elif llm_name == 'Database':
         return DATABASE
+    elif llm_name == 'llama3':
+        return DATABASE
 
 @st.cache_resource(experimental_allow_widgets=True)
 def load_model():

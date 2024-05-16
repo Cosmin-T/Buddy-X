@@ -127,7 +127,7 @@ def process():
         with st.spinner(" "):
             start_time = time.time()
 
-            selected_model = st.session_state.get('selected_model', 'LlaMa2')
+            selected_model = st.session_state.get('selected_model', 'llama3')
 
             response = ""
             if selected_model == 'Database':
