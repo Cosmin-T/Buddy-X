@@ -3,6 +3,8 @@ from telegram_logic.util import *
 from logic.util import *
 from logic.hello import *
 import os
+from sqlalchemy.exc import OperationalError
+import time
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 from sqlalchemy import create_engine, MetaData, Table
@@ -19,10 +21,10 @@ columns = []
 
 def initialize_database():
     conn_details = {
-        'user': 'root',
-        'password': PASS,
-        'host': 'localhost',
-        'port': 3306,
+        'user': 'gestiune1',
+        'password': '',
+        'host': '127.0.0.1',
+        'port': 5432,
         'database': DATABASE_NAME
     }
 
@@ -31,14 +33,23 @@ def initialize_database():
 
 def generate_engine_and_metadata():
     conn_details = initialize_database()
-    connection_string = f"mysql+pymysql://{conn_details['user']}:{quote_plus(conn_details['password'])}@{conn_details['host']}:{conn_details['port']}/{conn_details['database']}"
-    print(f"Initialize Connection")
-    engine = create_engine(connection_string)
-    print(f"Database Connected")
-    metadata = MetaData()
-    metadata.reflect(bind=engine)
-    print("Metadata reflected")
-    return engine, metadata
+    connection_string = f"mysql+pymysql://{conn_details['user']}:{quote_plus(conn_details['password'])}@{conn_details['host']}:{conn_details['port']}/{conn_details['database']}?connect_timeout=10&read_timeout=30&write_timeout=30"
+    print("Initialize Connection")
+
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            engine = create_engine(connection_string)
+            print("Database Connected")
+            metadata = MetaData()
+            metadata.reflect(bind=engine)
+            print("Metadata reflected")
+            return engine, metadata
+        except OperationalError as e:
+            print(f"Connection failed: {e}. Retrying ({attempt + 1}/{max_retries})...")
+            time.sleep(5)  # Wait before retrying
+    raise Exception("Failed to connect to the database after multiple attempts.")
+
 
 def generate_db_chain():
     engine, _ = generate_engine_and_metadata()

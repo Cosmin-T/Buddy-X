@@ -9,7 +9,7 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
 
 PASS = get_key(dotenv_path, 'PASS')
-DATABASE_NAME = 'Llama2_Test'
+DATABASE_NAME = 'omnidata'
 
 CENTERED = 'centered'
 WIDE = 'wide'
