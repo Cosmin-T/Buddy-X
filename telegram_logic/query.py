@@ -21,15 +21,27 @@ columns = []
 
 def initialize_database():
     conn_details = {
-        'user': 'gestiune1',
-        'password': '',
-        'host': '127.0.0.1',
-        'port': 5432,
+        'user': 'root',
+        'password': PASS,
+        'host': 'localhost',
+        'port': 3306,
         'database': DATABASE_NAME
     }
 
     print('Prepare Database')
     return conn_details
+
+# def initialize_database():
+#     conn_details = {
+#         'user': 'gestiune1',
+#         'password': '',
+#         'host': '127.0.0.1',
+#         'port': 5432,
+#         'database': DATABASE_NAME
+#     }
+
+#     print('Prepare Database')
+#     return conn_details
 
 def generate_engine_and_metadata():
     conn_details = initialize_database()
@@ -47,7 +59,7 @@ def generate_engine_and_metadata():
             return engine, metadata
         except OperationalError as e:
             print(f"Connection failed: {e}. Retrying ({attempt + 1}/{max_retries})...")
-            time.sleep(5)  # Wait before retrying
+            time.sleep(5)
     raise Exception("Failed to connect to the database after multiple attempts.")
 
 
