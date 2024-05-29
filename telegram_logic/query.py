@@ -16,6 +16,7 @@ from langchain import LLMChain, PromptTemplate
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from concurrent.futures import ThreadPoolExecutor
 
 columns = []
 
@@ -62,7 +63,6 @@ def generate_engine_and_metadata():
             time.sleep(5)
     raise Exception("Failed to connect to the database after multiple attempts.")
 
-
 def generate_db_chain():
     engine, _ = generate_engine_and_metadata()
     llm = Ollama(model="codellama")
@@ -72,6 +72,8 @@ def generate_db_chain():
     db_chain = SQLDatabaseChain.from_llm(llm=llm, db=db, verbose=True, memory=ConversationBufferWindowMemory(k=2))
     print("Generated SQLDatabaseChain from Ollama and SQLDatabase with verbose output")
     return db_chain, llm
+
+columns = []
 
 def itteration(metadata):
     global columns
@@ -83,23 +85,28 @@ def itteration(metadata):
         print("Column Names:", columns)
     return table_names, table_name, columns
 
-def prompt_temp(table_names, history, human_input):
-    global columns
+def prompt_temp(table_names, columns, history, human_input):
     prompt_template = f"""
         You are an AI assistant specializing in SQL query generation for a database containing employee information. Please use the context below to formulate SQL queries.
 
+        **ENSURE PROPER UNPACKING AND FORMATING IN TEXT**
+        **RETURN BACK ONLY THE ANSWER**
+        As an expert, you must use joins whenever required.
+
         **Context:**
-        You must query against the connected database, which has the following table(s): {', '.join(table_names)} and the following column(s): {', '.join(columns)}
+        You must query against the connected database, which has the following table(s): {', '.join(table_names)} and the following column(s): {', '.join(columns)}.
 
         **EXAMPLE:**
-        Question: What is the total count of employees?
-        SQL Query: SELECT COUNT(EmployeeID) AS TotalEmployees FROM Employees;
-        SQL Result: [(521,)]
-        Answer: There are 521 total employees.
+        Question: What is the total count of [Entity]?
+        SQL Query: SELECT COUNT([EntityID]) AS Total[Entities] FROM [EntityTable];
+        SQL Result: [([Count],)]
+        Answer: There are [Count] total [entities].
 
-        **RETURN BACK ONLY THE ANSWER**
-
-        As an expert, you must use joins whenever required.
+        **EXAMPLE:**
+        Question: Who are the [entities] working in the [Condition]?
+        SQL Query: SELECT [EntityName] FROM [EntityTable] WHERE [EntityAttribute] = '[Condition]';
+        SQL Result: [("[Name1]",), ("[Name2]",), ("[Name3]",)]
+        Answer: The [entities] working in the [Condition] are [Name1], [Name2], [Name3].
 
         {history}
         Human: {human_input}
@@ -107,7 +114,7 @@ def prompt_temp(table_names, history, human_input):
     """
     print('Prompt Template Generated')
     prompt = PromptTemplate(
-        input_variables = ['history', 'human_input'],
+        input_variables=['history', 'human_input'],
         template=prompt_template
     )
     return prompt
@@ -116,9 +123,9 @@ def query_employees(human_input):
     db_chain, _ = generate_db_chain()
     _, metadata = generate_engine_and_metadata()
 
-    table_names = metadata.tables.keys()
+    table_names, _, columns = itteration(metadata)
     try:
-        prompt_template = prompt_temp(table_names, history="", human_input=human_input)
+        prompt_template = prompt_temp(table_names, columns, history="", human_input=human_input)
         full_prompt = f'{[prompt_template]} \n\nQuestion: {human_input.lower()}'
         response = db_chain.invoke({"query": full_prompt})
         if response:
@@ -137,10 +144,10 @@ def query_employees(human_input):
     except Exception as e:
         print(f'Error during processing: {e}')
 
-async def  start_command(update:Update, context: ContextTypes.DEFAULT_TYPE):
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text('Hi, how can I help you?')
 
-def handle_repsonse(text):
+def handle_response(text):
     return query_employees(text)
 
 async def handle_message(update, context: ContextTypes.DEFAULT_TYPE):
@@ -151,15 +158,19 @@ async def handle_message(update, context: ContextTypes.DEFAULT_TYPE):
     if message_type == 'group':
         if BOT_USERNAME in text:
             new_text = text.replace(BOT_USERNAME, '').strip()
-            response = handle_repsonse(new_text)
+            with ThreadPoolExecutor() as executor:
+                future = executor.submit(handle_response, new_text)
+                response = future.result()
         else:
             print('Bot was not mentioned in the group. No response sent.')
             return
     else:
-        response = handle_repsonse(text)
+        with ThreadPoolExecutor() as executor:
+            future = executor.submit(handle_response, text)
+            response = future.result()
 
     print(f'Bot: {response}')
     await update.message.reply_text(response)
 
-async def error(update:Update, context: ContextTypes.DEFAULT_TYPE):
+async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused error {context.error}')
